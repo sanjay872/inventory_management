@@ -1,7 +1,9 @@
+import { Box, Typography } from "@mui/material";
+
 export default function Home() {
   return (
-    <div>
-      Home
-    </div>
+    <Box>
+      <Typography variant="h3">Inventory Management</Typography>
+    </Box>
   );
 }
