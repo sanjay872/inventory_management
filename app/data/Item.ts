@@ -1,5 +1,4 @@
 type Item={
-    id: string;
     itemName: string;
     quantity: number;
     price: number;
