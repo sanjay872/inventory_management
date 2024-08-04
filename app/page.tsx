@@ -107,13 +107,13 @@ export default function Home() {
     const docRef= doc(collection(firestore,"inventory"),id);
     const docSnap = await getDoc(docRef);
     if(docSnap.exists()){
-      const docData = docSnap.data();
-      if(docData.quantity>1){
-        await setDoc(docRef,{...docData,quantity:docData.quantity-1});
-      }
-      else{
+      //const docData = docSnap.data();
+      // if(docData.quantity>1){
+      //   await setDoc(docRef,{...docData,quantity:docData.quantity-1});
+      // }
+      // else{
         await deleteDoc(docRef);
-      }
+      // }
     }
     closeForm();
     getItems();
@@ -214,7 +214,7 @@ export default function Home() {
                 <Button variant="contained" onClick={() => openEditForm(item)}>Edit</Button>
               </Box>
               <Box padding={".5rem"}>
-                <Button variant="contained" onClick={() => deleteItem(item.itemName)}>Delete one item</Button>
+                <Button variant="contained" onClick={() => deleteItem(item.itemName)}>Delete</Button>
               </Box>
             </Box>
           </Box>
