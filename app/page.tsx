@@ -1,19 +1,19 @@
 "use client"
 import { Box, Button, FormLabel, Modal, Stack, TextField, Typography } from "@mui/material";
 import { useState,useEffect, FormEvent } from "react";
-import { collection, getDocs, query,doc,getDoc, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, query,doc,getDoc, deleteDoc, setDoc, where } from "firebase/firestore";
 import firestore from "./utils/firebase";
 import Item  from "./data/Item";
 import toast from "react-hot-toast";
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
+  const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState("");
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);
   const [description, setDescription] = useState("");
-  const [selectedItem, setSelectedItem] = useState<Item>();
   const [editItem, setEditItem] = useState<boolean>(false);
 
   const getItems = async () => {
@@ -22,7 +22,6 @@ export default function Home() {
     const inventoryItems = documents.docs.map((doc) => {
       const data = doc.data();
       return {
-        id: doc.id,
         itemName: data.itemName,
         quantity: data.quantity,
         price: data.price,
@@ -86,7 +85,6 @@ export default function Home() {
       setDescription(item.description);
       setOpen(true);
       setEditItem(true);
-      setSelectedItem(item);  
     }
   }
 
@@ -103,10 +101,33 @@ export default function Home() {
     setEditItem(false);
   } 
 
-  const deleteItem = async (id: string) => {
-    const docRef= doc(collection(firestore,"inventory"),id);
+  async function getItemsByName(){
+    if(search!="" && search!=null && search!=undefined){
+      const snapshot = query(collection(firestore, "inventory"),where("itemName","==",search));
+      const documents = await getDocs(snapshot);
+      const inventoryItems = documents.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        itemName: data.itemName,
+        quantity: data.quantity,
+        price: data.price,
+        description: data.description,
+      };
+    }
+    );
+    setItems(inventoryItems); 
+    }
+    else{
+      toast.error("Please enter a valid search query");
+    }
+  }
+
+  const deleteItem = async (itemName: string) => {
+    const docRef= doc(collection(firestore,"inventory"),itemName);
     const docSnap = await getDoc(docRef);
     if(docSnap.exists()){
+      // to remove only one item from the inventory
       //const docData = docSnap.data();
       // if(docData.quantity>1){
       //   await setDoc(docRef,{...docData,quantity:docData.quantity-1});
@@ -193,32 +214,43 @@ export default function Home() {
       </Modal>
       <Box display="flex" flexDirection="column" gap={2} alignItems={"center"} justifyContent={"center"}>
         <Box fontSize={"6vw"}>Inventory Management</Box>
-        <Box display={"flex"} flexDirection={"row"}>
-          <Box padding={"2rem"}>
-            <Button variant="contained" onClick={openAddNewItemForm}>Add Item</Button>
-          </Box>
-          <Box padding={"2rem"}>
-            <Button variant="contained" onClick={getItems}>Refresh</Button>
-          </Box>
+        <Box display={"flex"} flexDirection={"row"} justifyContent={"center"} alignItems={"center"} gap={2}>
+          <TextField type="text" required value={search} onChange={(e)=>{setSearch(e.target.value)}} placeholder="Search By Item Name" />
+          <Button variant="contained" onClick={getItemsByName}>Search</Button>
         </Box>
       </Box>
-      <Box display="flex" flexDirection="row" padding={"2rem"} gap={2} marginTop={"2rem"} marginBottom={"2rem"} flexWrap={"wrap"}>
-        {items.map((item) => (
-          <Box key={item.itemName} display="flex" margin={"1rem"} flexDirection="column" gap={2} padding={"2rem"} border={"solid black .2rem"} boxShadow={".5rem 1rem"}>
-            <Typography variant="h6">{item.itemName}</Typography>
-            <Typography variant="body1">Quantity: {item.quantity}</Typography>
-            <Typography variant="body1">Price: {item.price}</Typography>
-            <Typography variant="body1">Description: {item.description==""?"-":item.description}</Typography>
-            <Box display={"flex"} flexDirection={"row"} margin={"2px"}>
-              <Box padding={".5rem"}>
-                <Button variant="contained" onClick={() => openEditForm(item)}>Edit</Button>
-              </Box>
-              <Box padding={".5rem"}>
-                <Button variant="contained" onClick={() => deleteItem(item.itemName)}>Delete</Button>
+      <Box display="flex" flexDirection={"column"} marginTop={"2rem"} gap={"2rem"} margin={"1rem"}>
+        <Box display={"flex"} alignItems={"flex-end"} justifyContent={"flex-end"} border={".01rem solid black"} borderRadius={".5rem"} >
+            <Box padding={"1rem"}>
+              <Button variant="contained" onClick={openAddNewItemForm}>Add Item</Button>
+            </Box>
+            <Box padding={"1rem"}>
+              <Button variant="contained" onClick={getItems}>Show All</Button>
+            </Box>
+        </Box>
+        <Box display={"flex"} borderRadius={".5rem"} flexDirection="row" padding={"1rem"} gap={2} 
+        marginBottom={"2rem"} flexWrap={"wrap"} border={".01rem solid black"}
+        height={"23em"}
+        alignItems={"center"} justifyContent={"center"}
+        overflow={"auto"}
+        >
+          {items.map((item) => (
+            <Box key={item.itemName} borderRadius={"1rem"} display="flex" margin={"1rem"} flexDirection="column" gap={2} padding={"2rem"} border={"solid black .2rem"} boxShadow={".5rem 1rem"}>
+              <Typography variant="h6">{item.itemName}</Typography>
+              <Typography variant="body1">Quantity: {item.quantity}</Typography>
+              <Typography variant="body1">Price: {item.price}</Typography>
+              <Typography variant="body1">Description: {item.description==""?"-":item.description}</Typography>
+              <Box display={"flex"} flexDirection={"row"} margin={"2px"}>
+                <Box padding={".5rem"}>
+                  <Button variant="contained" onClick={() => openEditForm(item)}>Edit</Button>
+                </Box>
+                <Box padding={".5rem"}>
+                  <Button variant="contained" onClick={() => deleteItem(item.itemName)}>Delete</Button>
+                </Box>
               </Box>
             </Box>
-          </Box>
-        ))}
+          ))}
+        </Box> 
         </Box>
     </Box>
   );
